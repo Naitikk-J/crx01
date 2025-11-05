@@ -15,6 +15,7 @@ export default {
         code: ['monospace'],
       },
       colors: {
+        'primary-green': 'hsl(var(--primary-green))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
