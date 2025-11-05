@@ -3,17 +3,15 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 
 export async function POST(request: Request) {
   try {
+    await dbConnect();
     const { email, walletAddress, role } = await request.json();
 
     if (!email || !walletAddress || !role) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
-
-    await dbConnect();
 
     const existingUser = await User.findOne({
       $or: [{ email: email.toLowerCase() }, { walletAddress: walletAddress.toLowerCase() }],
@@ -22,8 +20,9 @@ export async function POST(request: Request) {
     if (existingUser) {
       return NextResponse.json({ message: 'Email or wallet address already in use.' }, { status: 409 });
     }
-
-    const generatedPassword = crypto.randomBytes(8).toString('hex');
+    
+    // Using a fixed password for now to debug the registration flow
+    const generatedPassword = "password123";
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(generatedPassword, salt);
 
@@ -36,8 +35,6 @@ export async function POST(request: Request) {
 
     await newUser.save();
 
-    // In a real application, you would email this password.
-    // For this simulation, we log it to the server console.
     console.log(`
       ---- NEW USER PASSWORD (SIMULATED EMAIL) ----
       Email: ${email}
@@ -46,7 +43,7 @@ export async function POST(request: Request) {
       -------------------------------------------
     `);
     
-    return NextResponse.json({ message: 'Registration successful! Please check your email for your password.' }, { status: 201 });
+    return NextResponse.json({ message: 'Registration successful! Please check your server console for your temporary password.' }, { status: 201 });
 
   } catch (error: any) {
     console.error('--- REGISTRATION API ERROR ---');
