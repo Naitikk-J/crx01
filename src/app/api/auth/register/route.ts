@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
 export async function POST(request: Request) {
@@ -27,7 +27,8 @@ export async function POST(request: Request) {
     }
 
     const generatedPassword = crypto.randomBytes(8).toString('hex');
-    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(generatedPassword, salt);
 
     const newUser = new User({
       email: email.toLowerCase(),

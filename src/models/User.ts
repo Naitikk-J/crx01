@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, index: true, lowercase: true },
@@ -11,6 +11,6 @@ const userSchema = new mongoose.Schema({
     organizationName: { type: String }
   },
   kycStatus: { type: String, enum: ['NotStarted', 'Pending', 'Approved', 'Rejected'], default: 'NotStarted' }
-});
+}, { strict: false });
 
 export default mongoose.models.User || mongoose.model('User', userSchema);
