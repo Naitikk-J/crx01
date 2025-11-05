@@ -4,7 +4,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env'
+    'Please define the MONGODB_URI environment variable inside .env.local'
   );
 }
 
@@ -35,9 +35,10 @@ async function dbConnect() {
       return mongoose;
     });
   }
-
+  
   try {
     cached.conn = await cached.promise;
+    console.log('=> new database connection created');
   } catch (e) {
     cached.promise = null;
     console.error('!!! Database connection failed:', e);
