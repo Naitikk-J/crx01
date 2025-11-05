@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import jwtDecode from 'jwt-decode';
 import axios from 'axios';
 
 interface User {
@@ -20,6 +19,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function parseJwt(token: string) {
+  try {
+    return JSON.parse(atob(token.split('.')[1]));
+  } catch (e) {
+    return null;
+  }
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -29,8 +36,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedToken = localStorage.getItem('crx-token');
     if (storedToken) {
       try {
-        const decoded: User & { exp: number } = jwtDecode(storedToken);
-        if (decoded.exp * 1000 > Date.now()) {
+        const decoded: User & { exp: number } = parseJwt(storedToken);
+        if (decoded && decoded.exp * 1000 > Date.now()) {
           setUser({ email: decoded.email, walletAddress: decoded.walletAddress, role: decoded.role });
           setToken(storedToken);
           axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
@@ -42,14 +49,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     setLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = (newToken: string) => {
-    const decoded: User = jwtDecode(newToken);
-    localStorage.setItem('crx-token', newToken);
-    setUser({ email: decoded.email, walletAddress: decoded.walletAddress, role: decoded.role });
-    setToken(newToken);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    const decoded: User = parseJwt(newToken);
+    if(decoded){
+        localStorage.setItem('crx-token', newToken);
+        setUser({ email: decoded.email, walletAddress: decoded.walletAddress, role: decoded.role });
+        setToken(newToken);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    }
     setLoading(false);
   };
 
