@@ -8,6 +8,11 @@ if (!MONGODB_URI) {
   );
 }
 
+/**
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections from growing exponentially
+ * during API Route usage.
+ */
 let cached = (global as any).mongoose;
 
 if (!cached) {
@@ -16,7 +21,7 @@ if (!cached) {
 
 async function dbConnect() {
   if (cached.conn) {
-    console.log('Using cached database connection.');
+    console.log('=> using cached database connection');
     return cached.conn;
   }
 
@@ -24,24 +29,21 @@ async function dbConnect() {
     const opts = {
       bufferCommands: false,
     };
-    
-    console.log('Creating new database connection promise.');
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      console.log('MongoDB connection promise resolved, connection successful.');
+
+    console.log('=> creating new database connection');
+    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
       return mongoose;
     });
   }
-  
+
   try {
-    console.log('Awaiting database connection promise.');
     cached.conn = await cached.promise;
-    console.log('Database connection promise awaited successfully.');
   } catch (e) {
-    console.error('Failed to connect to MongoDB:', e);
     cached.promise = null;
+    console.error('!!! Database connection failed:', e);
     throw e;
   }
-  
+
   return cached.conn;
 }
 

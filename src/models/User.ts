@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Model } from 'mongoose';
 
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, index: true, lowercase: true },
@@ -13,4 +13,7 @@ const userSchema = new mongoose.Schema({
   kycStatus: { type: String, enum: ['NotStarted', 'Pending', 'Approved', 'Rejected'], default: 'NotStarted' }
 }, { strict: false });
 
-export default mongoose.models.User || mongoose.model('User', userSchema);
+// Prevents recompilation of the model during Next.js hot reloads
+const User: Model<any> = mongoose.models.User || mongoose.model('User', userSchema);
+
+export default User;
