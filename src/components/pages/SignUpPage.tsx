@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '../ui/label';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Terminal } from 'lucide-react';
 
 interface SignUpPageProps {
   setPage: (page: 'login' | 'signup') => void;
@@ -23,20 +25,11 @@ declare global {
 export default function SignUpPage({ setPage }: SignUpPageProps) {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Please enter your email address.",
-      });
-      return;
-    }
-
+  const handleConnectWallet = async () => {
     if (!window.ethereum) {
       toast({
         variant: "destructive",
@@ -45,13 +38,36 @@ export default function SignUpPage({ setPage }: SignUpPageProps) {
       });
       return;
     }
-
     setLoading(true);
     try {
       const provider = new BrowserProvider(window.ethereum);
       const accounts = await provider.send('eth_requestAccounts', []);
-      const walletAddress = accounts[0];
+      setWalletAddress(accounts[0]);
+    } catch (error) {
+      console.error("Wallet connection failed", error);
+      toast({
+        variant: "destructive",
+        title: "Wallet Connection Failed",
+        description: "Could not connect to your wallet. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !walletAddress) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please enter your email address and connect your wallet.",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
       await axios.post('/api/auth/register', { email, walletAddress, role });
 
       toast({
@@ -81,39 +97,52 @@ export default function SignUpPage({ setPage }: SignUpPageProps) {
           <CardDescription>Join the EcoTrust Exchange market.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignUp} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="rounded-lg shadow-sm"
-              />
-            </div>
-
-            <div className="space-y-2">
-                <Label htmlFor="role">I am a</Label>
-                <Select value={role} onValueChange={(value: 'buyer' | 'seller') => setRole(value)}>
-                    <SelectTrigger className="w-full rounded-lg shadow-sm" id="role">
-                        <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="buyer">Buyer</SelectItem>
-                        <SelectItem value="seller">Seller</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-            
-            <Button type="submit" disabled={loading} className="w-full bg-primary-green hover:bg-primary-green/90 text-white rounded-lg">
-              {loading ? 'Processing...' : 'Connect Wallet & Sign Up'}
+          {!walletAddress ? (
+            <Button onClick={handleConnectWallet} disabled={loading} className="w-full bg-primary-green hover:bg-primary-green/90 text-white rounded-lg">
+              {loading ? 'Connecting...' : 'Connect Wallet to Sign Up'}
             </Button>
-          </form>
+          ) : (
+            <form onSubmit={handleSignUp} className="space-y-6">
+              <Alert>
+                <Terminal className="h-4 w-4" />
+                <AlertTitle>Wallet Connected!</AlertTitle>
+                <AlertDescription className="truncate text-xs">
+                  {walletAddress}
+                </AlertDescription>
+              </Alert>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="rounded-lg shadow-sm"
+                />
+              </div>
+
+              <div className="space-y-2">
+                  <Label htmlFor="role">I am a</Label>
+                  <Select value={role} onValueChange={(value: 'buyer' | 'seller') => setRole(value)}>
+                      <SelectTrigger className="w-full rounded-lg shadow-sm" id="role">
+                          <SelectValue placeholder="Select your role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="buyer">Buyer</SelectItem>
+                          <SelectItem value="seller">Seller</SelectItem>
+                      </SelectContent>
+                  </Select>
+              </div>
+              
+              <Button type="submit" disabled={loading} className="w-full bg-primary-green hover:bg-primary-green/90 text-white rounded-lg">
+                {loading ? 'Processing...' : 'Sign Up'}
+              </Button>
+            </form>
+          )}
           <div className="mt-6 text-center text-sm">
             <a href="#" onClick={(e) => { e.preventDefault(); setPage('login'); }} className="font-medium text-primary hover:text-primary/90">
               Already have an account? Log In
