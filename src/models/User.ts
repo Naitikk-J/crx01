@@ -11,9 +11,10 @@ const userSchema = new mongoose.Schema({
     organizationName: { type: String }
   },
   kycStatus: { type: String, enum: ['NotStarted', 'Pending', 'Approved', 'Rejected'], default: 'NotStarted' }
-}, { strict: false });
+});
 
-// Prevents recompilation of the model during Next.js hot reloads
+// The 'mongoose.models.User' check prevents the model from being re-compiled on hot reloads,
+// which is a common source of errors in Next.js.
 const User: Model<any> = mongoose.models.User || mongoose.model('User', userSchema);
 
 export default User;
