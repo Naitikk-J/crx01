@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { BrowserProvider, Eip1193Provider } from 'ethers';
-import axios, { AxiosError } from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -68,20 +67,28 @@ export default function SignUpPage({ setPage }: SignUpPageProps) {
 
     setLoading(true);
     try {
-      await axios.post('/api/auth/register', { email, walletAddress, role });
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, walletAddress, role }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'An unknown error occurred.');
+      }
 
       toast({
         title: "Registration Successful!",
-        description: "Please check your email for your password, then log in.",
+        description: data.message,
       });
       setPage('login');
-    } catch (error) {
-      const axiosError = error as AxiosError<{ message: string }>;
-      const errorMessage = axiosError.response?.data?.message || 'An unknown error occurred.';
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Registration Failed",
-        description: errorMessage,
+        description: error.message,
       });
       console.error('Sign-up failed:', error);
     } finally {

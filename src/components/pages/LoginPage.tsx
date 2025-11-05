@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { BrowserProvider, Eip1193Provider } from 'ethers';
-import axios, { AxiosError } from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,19 +59,28 @@ export default function LoginPage({ setPage }: LoginPageProps) {
 
     setLoading(true);
     try {
-      const response = await axios.post('/api/auth/login', { walletAddress, password });
-      login(response.data.token);
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress, password }),
+      });
+      
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'An unknown error occurred.');
+      }
+      
+      login(data.token);
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
-    } catch (error) {
-      const axiosError = error as AxiosError<{ message: string }>;
-      const errorMessage = axiosError.response?.data?.message || 'An unknown error occurred.';
+    } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: errorMessage,
+        description: error.message,
       });
       console.error('Login failed:', error);
     } finally {

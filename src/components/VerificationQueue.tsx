@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios, { AxiosError } from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Table,
@@ -37,15 +36,21 @@ export default function VerificationQueue() {
       if (!token) return;
       try {
         setLoading(true);
-        const response = await axios.get('/api/admin/verification-queue');
-        setQueue(response.data);
-      } catch (error) {
-        const axiosError = error as AxiosError<{ message: string }>;
-        const errorMessage = axiosError.response?.data?.message || 'Could not fetch verification queue.';
+        const response = await fetch('/api/admin/verification-queue', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || 'Could not fetch verification queue.');
+        }
+        setQueue(data);
+      } catch (error: any) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: errorMessage,
+          description: error.message,
         });
       } finally {
         setLoading(false);

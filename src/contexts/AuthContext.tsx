@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import axios from 'axios';
 
 interface User {
   email: string;
@@ -40,7 +39,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (decoded && decoded.exp * 1000 > Date.now()) {
           setUser({ email: decoded.email, walletAddress: decoded.walletAddress, role: decoded.role });
           setToken(storedToken);
-          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
         } else {
           logout();
         }
@@ -58,7 +56,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('crx-token', newToken);
         setUser({ email: decoded.email, walletAddress: decoded.walletAddress, role: decoded.role });
         setToken(newToken);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     }
     setLoading(false);
   };
@@ -67,7 +64,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('crx-token');
     setUser(null);
     setToken(null);
-    delete axios.defaults.headers.common['Authorization'];
     setLoading(false);
   };
 

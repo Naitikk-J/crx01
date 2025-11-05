@@ -1,14 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import axios, { AxiosError } from 'axios';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Skeleton } from './ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Briefcase, MapPin, Tag, Globe } from 'lucide-react';
+import { Briefcase, MapPin, Tag } from 'lucide-react';
 
 interface Project {
   id: number;
@@ -33,15 +32,21 @@ export default function Marketplace() {
       }
       try {
         setLoading(true);
-        const response = await axios.get('/api/projects');
-        setProjects(response.data);
-      } catch (error) {
-        const axiosError = error as AxiosError<{ message: string }>;
-        const errorMessage = axiosError.response?.data?.message || 'Could not fetch projects.';
+        const response = await fetch('/api/projects', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || 'Could not fetch projects.');
+        }
+        setProjects(data);
+      } catch (error: any) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: errorMessage,
+          description: error.message,
         });
       } finally {
         setLoading(false);
