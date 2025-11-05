@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { BrowserProvider, Eip1193Provider } from 'ethers';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +15,7 @@ interface LoginPageProps {
 
 declare global {
     interface Window{
-        ethereum?: Eip1193Provider
+        ethereum?: any;
     }
 }
 
@@ -31,9 +30,10 @@ export default function LoginPage({ setPage }: LoginPageProps) {
     if (window.ethereum) {
       try {
         setLoading(true);
-        const provider = new BrowserProvider(window.ethereum);
-        const accounts = await provider.send('eth_requestAccounts', []);
-        setWalletAddress(accounts[0]);
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts.length > 0) {
+          setWalletAddress(accounts[0]);
+        }
       } catch (error) {
         console.error('Failed to connect wallet:', error);
         toast({

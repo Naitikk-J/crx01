@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { BrowserProvider, Eip1193Provider } from 'ethers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,7 +16,7 @@ interface SignUpPageProps {
 
 declare global {
     interface Window{
-        ethereum?: Eip1193Provider
+        ethereum?: any;
     }
 }
 
@@ -39,9 +38,10 @@ export default function SignUpPage({ setPage }: SignUpPageProps) {
     }
     setLoading(true);
     try {
-      const provider = new BrowserProvider(window.ethereum);
-      const accounts = await provider.send('eth_requestAccounts', []);
-      setWalletAddress(accounts[0]);
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+      }
     } catch (error) {
       console.error("Wallet connection failed", error);
       toast({
@@ -76,7 +76,7 @@ export default function SignUpPage({ setPage }: SignUpPageProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'An unknown error occurred.');
+        throw new Error(data.message || 'An unknown error occurred during registration.');
       }
 
       toast({
