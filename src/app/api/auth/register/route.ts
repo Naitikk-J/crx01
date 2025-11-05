@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
-import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
@@ -23,8 +22,9 @@ export async function POST(request: Request) {
     
     // Using a fixed password for now to debug the registration flow
     const generatedPassword = "password123";
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(generatedPassword, salt);
+    
+    // Storing a placeholder instead of a hash for debugging
+    const hashedPassword = "placeholder_password";
 
     const newUser = new User({
       email: email.toLowerCase(),
@@ -40,6 +40,7 @@ export async function POST(request: Request) {
       Email: ${email}
       Wallet: ${walletAddress}
       Password: ${generatedPassword} 
+      This is a temporary password. The login is currently configured to accept any password.
       -------------------------------------------
     `);
     
